@@ -164,3 +164,5 @@ submission.csv
 gender_submission.csv
 dataset/
 logs/
+/wandb/
+/lightning_logs/
