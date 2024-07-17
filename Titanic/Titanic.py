@@ -188,6 +188,3 @@ with torch.no_grad():
 # 保存预测结果
 submission = pd.DataFrame({'PassengerId': test_data['PassengerId'], 'Survived': np.array(test_pred).ravel()})
 submission.to_csv('submission.csv', index=False)
-
-
-
