@@ -1,19 +1,19 @@
 # author:octal
 # time:2024/7/17
 import pytorch_lightning as pl
-from torch.utils.data import DataLoader, Dataset, random_split
+from torch.utils.data import DataLoader, random_split
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 import os
 from .dataset import TitanicDataset
 
-
 class DInterface(pl.LightningDataModule):
-    def __init__(self, data_dir, batch_size=32, val_split=0.2):
+    def __init__(self, data_dir, batch_size=32, val_split=0.2, augment=False):
         super().__init__()
         self.data_dir = data_dir
         self.batch_size = batch_size
         self.val_split = val_split
+        self.augment = augment
 
     def setup(self, stage=None):
         train_data = pd.read_csv(os.path.join(self.data_dir, 'train.csv'))
@@ -24,7 +24,7 @@ class DInterface(pl.LightningDataModule):
         scaler.fit(pd.get_dummies(all_data.drop(['PassengerId', 'Cabin', 'Ticket', 'Name'], axis=1),
                                   columns=['Sex', 'Embarked'], drop_first=True))
 
-        self.train_dataset = TitanicDataset(train_data, scaler=scaler, train=True)
+        self.train_dataset = TitanicDataset(train_data, scaler=scaler, train=True, augment=self.augment)
         self.test_dataset = TitanicDataset(test_data, scaler=scaler, train=False)
 
         train_size = int((1 - self.val_split) * len(self.train_dataset))
