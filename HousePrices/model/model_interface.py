@@ -1,6 +1,6 @@
 # author:octal 
 # time:2024/7/18
-
+# model_interface.py
 
 from pytorch_lightning import LightningModule
 import torch.nn as nn

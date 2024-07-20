@@ -1,15 +1,12 @@
-# author:octal 
-# time:2024/7/18
-# dataset.py
 import pandas as pd
+from sklearn.preprocessing import StandardScaler
 from torch.utils.data import Dataset
 import torch
 
 class HousePricesDataset(Dataset):
-    def __init__(self, data, scaler=None, train=True):
+    def __init__(self, data, train=True):
         self.data = data
         self.train = train
-        self.scaler = scaler
         self.features = self._preprocess(data)
 
     def _preprocess(self, data):
@@ -18,23 +15,14 @@ class HousePricesDataset(Dataset):
         data['MasVnrArea'].fillna(0, inplace=True)
         data['GarageYrBlt'].fillna(data['GarageYrBlt'].median(), inplace=True)
 
-        # 填充类别特征的缺失值
-        for col in data.select_dtypes(include=['object']).columns:
-            data[col].fillna(data[col].mode()[0], inplace=True)
-
-        # 删除不必要的列
-        data.drop(['Id', 'Alley', 'PoolQC', 'Fence', 'MiscFeature'], axis=1, inplace=True)
-
-        # 独热编码
-        data = pd.get_dummies(data, drop_first=True)
-
         if self.train:
             features = data.drop(['SalePrice'], axis=1).values
         else:
             features = data.values
 
-        if self.scaler:
-            features = self.scaler.transform(features)
+        scaler = StandardScaler()
+        scaler.fit(features)
+        features = scaler.transform(features)
 
         return features
 

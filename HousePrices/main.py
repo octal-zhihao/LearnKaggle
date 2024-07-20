@@ -2,14 +2,17 @@
 # time:2024/7/18
 
 import argparse
+
+import torch
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
-from data import DInterface
+from datasets import DInterface
 from model import MInterface
 from pytorch_lightning.loggers import WandbLogger
+import pandas as pd
 import wandb
 
-def main(args):
+def train(args):
     data_module = DInterface(data_dir=args.data_dir, batch_size=args.batch_size, val_split=args.val_split)
     model = MInterface(input_dim=args.input_dim, lr=args.lr, num_heads=args.num_heads, dropout_rate=args.dropout_rate)
 
@@ -25,16 +28,42 @@ def main(args):
                       logger=wandb_logger)
     trainer.fit(model, data_module)
 
+def predict(args):
+
+    data_module = DInterface(data_dir=args.data_dir, batch_size=args.batch_size)
+    data_module.setup(stage='test')
+    model = MInterface.load_from_checkpoint(args.model_checkpoint, input_dim=args.input_dim, lr=args.lr, num_heads=args.num_heads)
+
+    test_data = pd.read_csv(f'{args.data_dir}/test.csv')
+    test_loader = data_module.test_dataloader()
+
+    model.eval()
+    test_pred = []
+    with torch.no_grad():
+        for batch in test_loader:
+            preds = model(batch)
+            preds = (preds.numpy() > 0.5).astype(int)
+            test_pred.extend(preds)
+
+    submission = pd.DataFrame({'PassengerId': test_data['PassengerId'], 'Survived': np.array(test_pred).ravel()})
+    submission.to_csv('submission.csv', index=False)
+    print("Predictions saved to submission.csv")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data_dir', type=str, default='dataset/')
+    parser.add_argument('--data_dir', type=str, default='data/')
     parser.add_argument('--batch_size', type=int, default=32)
-    parser.add_argument('--input_dim', type=int, default=79)
+    parser.add_argument('--input_dim', type=int, default=245)
     parser.add_argument('--lr', type=float, default=0.003)
     parser.add_argument('--max_epochs', type=int, default=50)
     parser.add_argument('--val_split', type=float, default=0.2, help='Validation split ratio')
     parser.add_argument('--num_heads', type=int, default=8, help='Number of attention heads')
     parser.add_argument('--dropout_rate', type=float, default=0.5, help='Dropout rate')
+    parser.add_argument('--is_train', type=bool, default=True)
+    parser.add_argument('--model_checkpoint', type=str, default='lightning_logs/jqvy3j3y/checkpoints/epoch=47-step=1776.ckpt')
+
     args = parser.parse_args()
-    main(args)
+    if args.is_train:
+        train(args)
+    else:
+        predict(args)
