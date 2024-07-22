@@ -45,7 +45,7 @@ def predict(args):
             preds = (preds.numpy() > 0.5).astype(int)
             test_pred.extend(preds)
 
-    submission = pd.DataFrame({'PassengerId': test_data['PassengerId'], 'Survived': np.array(test_pred).ravel()})
+    submission = pd.DataFrame({'Id': test_data['Id'], 'SalePrice': np.array(test_pred).ravel()})
     submission.to_csv('submission.csv', index=False)
     print("Predictions saved to submission.csv")
 
