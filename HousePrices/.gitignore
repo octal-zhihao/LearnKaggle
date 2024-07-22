@@ -165,3 +165,4 @@ logs/
 wandb/
 lightning_logs/
 /dataview.ipynb
+/submission.csv
