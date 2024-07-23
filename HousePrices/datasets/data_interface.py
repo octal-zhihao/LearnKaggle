@@ -18,9 +18,9 @@ class DInterface(pl.LightningDataModule):
         all_data = pd.concat([train_data.drop(['SalePrice'], axis=1), test_data], ignore_index=True)
         all_data = pd.get_dummies(all_data, drop_first=True)
 
-        train_data_encoded = all_data.iloc[:train_data.shape[0], :]
+        train_data_encoded = all_data.iloc[:train_data.shape[0], :].copy()
         train_data_encoded['SalePrice'] = train_data['SalePrice']
-        test_data_encoded = all_data.iloc[train_data.shape[0]:, :]
+        test_data_encoded = all_data.iloc[train_data.shape[0]:, :].copy()
 
         self.train_dataset = HousePricesDataset(train_data_encoded, train=True)
         self.test_dataset = HousePricesDataset(test_data_encoded, train=False)

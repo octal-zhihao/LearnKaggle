@@ -1,8 +1,7 @@
 # author:octal 
 # time:2024/7/18
-
 import argparse
-
+import numpy as np
 import torch
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
@@ -14,10 +13,12 @@ import wandb
 
 def train(args):
     data_module = DInterface(data_dir=args.data_dir, batch_size=args.batch_size, val_split=args.val_split)
-    model = MInterface(input_dim=args.input_dim, lr=args.lr, num_heads=args.num_heads, dropout_rate=args.dropout_rate)
+    model = MInterface(input_dim=args.input_dim,
+                       lr=args.lr,
+                       dropout_rate=args.dropout_rate)
 
     early_stopping_callback = EarlyStopping(monitor='val_loss', mode='min', patience=20)
-    checkpoint_callback = ModelCheckpoint(monitor="val_loss", mode='min', save_top_k=1, verbose=True)
+    checkpoint_callback = ModelCheckpoint(monitor="val_log_rmse", mode='min', save_top_k=1, verbose=True)
 
     # 初始化 wandb
     wandb.init(project='HousePrices', entity='octal-zhihao-zhou')
@@ -28,12 +29,17 @@ def train(args):
                       logger=wandb_logger)
     trainer.fit(model, data_module)
 
-def predict(args):
 
+def predict(args):
+    # Initialize DataModule and Model
     data_module = DInterface(data_dir=args.data_dir, batch_size=args.batch_size)
     data_module.setup(stage='test')
-    model = MInterface.load_from_checkpoint(args.model_checkpoint, input_dim=args.input_dim, lr=args.lr, num_heads=args.num_heads)
+    model = MInterface.load_from_checkpoint(args.model_checkpoint,
+                                            input_dim=args.input_dim,
+                                            lr=args.lr,
+                                            dropout_rate=args.dropout_rate)
 
+    # Prepare Test Data and DataLoader
     test_data = pd.read_csv(f'{args.data_dir}/test.csv')
     test_loader = data_module.test_dataloader()
 
@@ -42,7 +48,6 @@ def predict(args):
     with torch.no_grad():
         for batch in test_loader:
             preds = model(batch)
-            preds = (preds.numpy() > 0.5).astype(int)
             test_pred.extend(preds)
 
     submission = pd.DataFrame({'Id': test_data['Id'], 'SalePrice': np.array(test_pred).ravel()})
@@ -54,13 +59,13 @@ if __name__ == '__main__':
     parser.add_argument('--data_dir', type=str, default='data/')
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--input_dim', type=int, default=245)
-    parser.add_argument('--lr', type=float, default=0.003)
-    parser.add_argument('--max_epochs', type=int, default=50)
-    parser.add_argument('--val_split', type=float, default=0.2, help='Validation split ratio')
-    parser.add_argument('--num_heads', type=int, default=8, help='Number of attention heads')
-    parser.add_argument('--dropout_rate', type=float, default=0.5, help='Dropout rate')
-    parser.add_argument('--is_train', type=bool, default=True)
-    parser.add_argument('--model_checkpoint', type=str, default='lightning_logs/jqvy3j3y/checkpoints/epoch=47-step=1776.ckpt')
+    parser.add_argument('--lr', type=float, default=3e-2)
+    parser.add_argument('--max_epochs', type=int, default=1000)
+    parser.add_argument('--val_split', type=float, default=0.3)
+    parser.add_argument('--num_heads', type=int, default=8)
+    parser.add_argument('--dropout_rate', type=float, default=0.2)
+    parser.add_argument('--is_train', type=bool, default=False)
+    parser.add_argument('--model_checkpoint', type=str, default='lightning_logs/6cbl65ix/checkpoints/epoch=84-step=2720.ckpt')
 
     args = parser.parse_args()
     if args.is_train:
