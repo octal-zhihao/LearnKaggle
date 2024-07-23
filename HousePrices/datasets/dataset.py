@@ -1,12 +1,14 @@
+import numpy as np
 from sklearn.preprocessing import StandardScaler
-import pandas as pd
 import torch
 from torch.utils.data import Dataset
 
+
 class HousePricesDataset(Dataset):
-    def __init__(self, data, train=True):
+    def __init__(self, data, train=True, augment=False):
         self.data = data
         self.train = train
+        self.augment = augment
         self.features = self._preprocess(data)
 
     def _preprocess(self, data):
@@ -25,10 +27,6 @@ class HousePricesDataset(Dataset):
             if data[col].isnull().any():
                 data[col].fillna(data[col].mode()[0], inplace=True)
 
-        # 处理其他缺失值（如特殊值）
-        # 你可以根据具体情况处理其他类型的缺失值，例如：
-        # data['某列'].fillna('默认值', inplace=True)
-
         if self.train:
             features = data.drop(['SalePrice'], axis=1).values
         else:
@@ -44,8 +42,16 @@ class HousePricesDataset(Dataset):
         return len(self.features)
 
     def __getitem__(self, idx):
+        features = self.features[idx]
+        if self.augment:
+            features = self._augment(features)
         if self.train:
             label = self.data.iloc[idx]['SalePrice']
-            return torch.tensor(self.features[idx], dtype=torch.float32), torch.tensor(label, dtype=torch.float32)
+            return torch.tensor(features, dtype=torch.float32), torch.tensor(label, dtype=torch.float32)
         else:
-            return torch.tensor(self.features[idx], dtype=torch.float32)
+            return torch.tensor(features, dtype=torch.float32)
+
+    def _augment(self, features):
+        noise = np.random.normal(0, 0.01, features.shape)
+        features += noise
+        return features

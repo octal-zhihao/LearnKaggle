@@ -12,20 +12,25 @@ import pandas as pd
 import wandb
 
 def train(args):
-    data_module = DInterface(data_dir=args.data_dir, batch_size=args.batch_size, val_split=args.val_split)
-    model = MInterface(input_dim=args.input_dim,
-                       lr=args.lr,
-                       dropout_rate=args.dropout_rate)
+    data_module = DInterface(data_dir=args.data_dir,
+                             batch_size=args.batch_size,
+                             val_split=args.val_split,
+                             augment=True)
 
-    early_stopping_callback = EarlyStopping(monitor='val_loss', mode='min', patience=20)
+    model = MInterface.load_from_checkpoint(args.model_checkpoint,
+                                            input_dim=args.input_dim,
+                                            lr=args.lr,
+                                            dropout_rate=args.dropout_rate)
+
+    # early_stopping_callback = EarlyStopping(monitor='val_loss', mode='min', patience=20)
     checkpoint_callback = ModelCheckpoint(monitor="val_log_rmse", mode='min', save_top_k=1, verbose=True)
 
     # 初始化 wandb
-    wandb.init(project='HousePrices', entity='octal-zhihao-zhou')
+    wandb.init(project='HousePrices', config=args)
     # 创建 WandbLogger
     wandb_logger = WandbLogger()
 
-    trainer = Trainer(max_epochs=args.max_epochs, callbacks=[early_stopping_callback, checkpoint_callback],
+    trainer = Trainer(max_epochs=args.max_epochs, callbacks=[checkpoint_callback],
                       logger=wandb_logger)
     trainer.fit(model, data_module)
 
@@ -59,13 +64,13 @@ if __name__ == '__main__':
     parser.add_argument('--data_dir', type=str, default='data/')
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--input_dim', type=int, default=245)
-    parser.add_argument('--lr', type=float, default=3e-2)
+    parser.add_argument('--lr', type=float, default=1e-3)
     parser.add_argument('--max_epochs', type=int, default=1000)
     parser.add_argument('--val_split', type=float, default=0.3)
-    parser.add_argument('--num_heads', type=int, default=8)
-    parser.add_argument('--dropout_rate', type=float, default=0.2)
+    parser.add_argument('--dropout_rate', type=float, default=0.5)
     parser.add_argument('--is_train', type=bool, default=False)
-    parser.add_argument('--model_checkpoint', type=str, default='lightning_logs/6cbl65ix/checkpoints/epoch=84-step=2720.ckpt')
+    parser.add_argument('--model_checkpoint', type=str,
+                        default='lightning_logs/kclj5p21/checkpoints/epoch=9-step=320.ckpt')
 
     args = parser.parse_args()
     if args.is_train:

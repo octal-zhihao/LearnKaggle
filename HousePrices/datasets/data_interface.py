@@ -5,11 +5,12 @@ import os
 from .dataset import HousePricesDataset
 
 class DInterface(pl.LightningDataModule):
-    def __init__(self, data_dir, batch_size=32, val_split=0.2):
+    def __init__(self, data_dir, batch_size=32, val_split=0.2, augment=False):
         super().__init__()
         self.data_dir = data_dir
         self.batch_size = batch_size
         self.val_split = val_split
+        self.augment = augment
 
     def setup(self, stage=None):
         train_data = pd.read_csv(os.path.join(self.data_dir, 'train.csv'))
@@ -22,7 +23,7 @@ class DInterface(pl.LightningDataModule):
         train_data_encoded['SalePrice'] = train_data['SalePrice']
         test_data_encoded = all_data.iloc[train_data.shape[0]:, :].copy()
 
-        self.train_dataset = HousePricesDataset(train_data_encoded, train=True)
+        self.train_dataset = HousePricesDataset(train_data_encoded, train=True, augment=self.augment)
         self.test_dataset = HousePricesDataset(test_data_encoded, train=False)
 
         train_size = int((1 - self.val_split) * len(self.train_dataset))
