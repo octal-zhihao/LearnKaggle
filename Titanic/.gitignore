@@ -167,3 +167,4 @@ logs/
 /wandb/
 /lightning_logs/
 /data/
+/dataview.ipynb

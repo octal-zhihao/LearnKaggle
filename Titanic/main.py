@@ -1,7 +1,7 @@
 import argparse
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
-from data import DInterface
+from datasets import DInterface
 from model import MInterface
 from pytorch_lightning.loggers import WandbLogger
 import wandb
@@ -24,7 +24,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data_dir', type=str, default='dataset/')
+    parser.add_argument('--data_dir', type=str, default='data/')
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--input_dim', type=int, default=8)
     parser.add_argument('--lr', type=float, default=0.003)
