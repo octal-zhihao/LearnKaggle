@@ -30,9 +30,9 @@ def predict(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data_dir', type=str, default='dataset/')
+    parser.add_argument('--data_dir', type=str, default='data/')
     parser.add_argument('--batch_size', type=int, default=32)
-    parser.add_argument('--model_checkpoint', type=str, default='lightning_logs/8ic1l4fh/checkpoints/epoch=64-step=2925.ckpt', help='Path to the model checkpoint for prediction')
+    parser.add_argument('--model_checkpoint', type=str, default='lightning_logs/ob26yhff/checkpoints/epoch=37-step=1710.ckpt', help='Path to the model checkpoint for prediction')
     parser.add_argument('--input_dim', type=int, default=8, help='Input dimension for the model')
     parser.add_argument('--num_heads', type=int, default=4, help='Number of attention heads')
     parser.add_argument('--lr', type=float, default=0.03, help='Learning rate for the model')
