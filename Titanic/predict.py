@@ -2,7 +2,7 @@ import argparse
 import pandas as pd
 import numpy as np
 import torch
-from data import DInterface
+from datasets import DInterface
 from model import MInterface
 
 def predict(args):
